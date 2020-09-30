@@ -1,14 +1,10 @@
 #!/usr/bin/python3
 import boto.s3.connection
 import boto
-import subprocess
 from subprocess import PIPE, Popen
 import time
 import os
 import requests
-# import wget
-# import urllib3
-import pdb
 from configparser import ConfigParser
 parser = ConfigParser()
 
@@ -110,57 +106,31 @@ def rgwops():
     status_rgw = f"systemctl status ceph-radosgw@rgw.{hostname}.rgw0.service"
     print(cmdline(status_rgw))
 
-    # check the time
-    get_time = time.strftime("%H:%M:%S")
-    print(get_time)
+
 
     # curl url from s3cmd info
     # install package requests - if using requests
 
-    curl_url = f"curl http://10.0.102.64:8080/{bkt_name}/"
-    print(curl_url)
+    URL = f"http://{hostname}:8080/{bkt_name}/"
+    print(URL)
+    print(type(URL))
 
-    url1 = f"http://{hostname}:8080/{bkt_name}/"
-    print(url1)
-    print(type(url1))
-    # pdb.set_trace()
+    # check the time
+    time.sleep(5)
+    get_time = time.strftime("%H:%M:%S")
+    print(get_time)
 
-    # headers = {"content-type": "application/json", "Accept-Charset": "UTF-8"}
-    # r = requests.get(url, data={"sample": "data"}, headers=headers)
-    # response = requests.get(url=url1)
-    r = requests.get(url=url1)
-    if 'json' in r.headers.get('Content-Type'):
-        js = r.json()
-    else:
-        print('Response content is not in JSON format.')
-        js = 'spam'
-    print(js)
-    data = r.json()
-    print(data)
-    # pdb.set_trace()
+    r = requests.get(url=URL)
+    print("The response is ::", r)
 
-    # c1 = os.system('wget {}'.format(url)) - refused
-    # c1 = os.system('curl -I {}'.format(url)) - refused
-    # print(c1)
-    # print(cmdline(curl_url))
-
-    # subprocess.run(['curl', curl_url])
-
-    # install wget
-    # filename = wget.download(url) - refused
-
-    # trying urllib3 another techq
-    # http = urllib3.PoolManager()
-    # r = http.request('GET', curl_url)
-    # print(r.status)
 
     # regx uid+anonymous part search
     str_check = "uid+anonymous"
     grep_file = f"grep -A 200 {get_time} /var/log/ceph/ceph-rgw-{hostname}.rgw0.log | grep {str_check}"
-    # print(grep_file)
     print(cmdline(grep_file))
 
     # add delete user and remove .s3cfg file after search
+
 
 def ceph_conf_change(hostname):
     # set the debug rgw = 20 , debug ms = 1,  in the .rgw0 instance
