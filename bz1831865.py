@@ -130,7 +130,10 @@ def rgwops():
     print(cmdline(grep_file))
 
     # add delete user and remove .s3cfg file after search
-
+    del_user = f"radosgw-admin user rm --uid={user} --purge-data"
+    cmdline(del_user)
+    remove_s3cfg_file = f"rm -rf .s3cfg_{user}"
+    cmdline(remove_s3cfg_file)
 
 def ceph_conf_change(hostname):
     # set the debug rgw = 20 , debug ms = 1,  in the .rgw0 instance
