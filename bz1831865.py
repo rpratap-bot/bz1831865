@@ -6,8 +6,9 @@ from subprocess import PIPE, Popen
 import time
 import os
 import requests
-import wget
-import urllib3
+# import wget
+# import urllib3
+import pdb
 from configparser import ConfigParser
 parser = ConfigParser()
 
@@ -29,6 +30,8 @@ def rgwops():
     email = f"{user}@example.com"
     access_key = '123451'
     secret_key = '678901'
+    hostname = os.uname()[1]
+
 
     # create user , named = operator_unique_id
     admin_create_command = f"""radosgw-admin user create --uid="{user}" --display-name="{disp_name}" \
@@ -39,7 +42,7 @@ def rgwops():
     conn = boto.connect_s3(
         aws_access_key_id = access_key,
          aws_secret_access_key = secret_key,
-        host = '10.0.102.64',
+        host = hostname,
          port = 8080,
         is_secure=False,               # uncomment if you are not using ssl
 
@@ -65,7 +68,6 @@ def rgwops():
     s3cmd_configure = os.system('s3cmd --configure --dump-config > /root/.s3cfg_{}'.format(user))
     print(s3cmd_configure)
     print('Make some changes to .s3cfg file')
-    hostname = os.uname()[1]
     port_number = '8080'
     os.system(
         'sed -i -e \'s,^host_base *=.*,host_base = http://{}:{},;s,host_bucket *=.*,host_bucket = http://{}:{},;s, \
@@ -113,19 +115,29 @@ def rgwops():
     print(get_time)
 
     # curl url from s3cmd info
-    # install package requests
+    # install package requests - if using requests
 
     curl_url = f"curl http://10.0.102.64:8080/{bkt_name}/"
     print(curl_url)
 
-    url = f"http://{hostname}:8080/{bkt_name}/"
-    print(url)
-    print(type(url))
+    url1 = f"http://{hostname}:8080/{bkt_name}/"
+    print(url1)
+    print(type(url1))
+    # pdb.set_trace()
+
     # headers = {"content-type": "application/json", "Accept-Charset": "UTF-8"}
     # r = requests.get(url, data={"sample": "data"}, headers=headers)
-    # response = requests.get(url)
-    # data = r.json()
-    # print(data)
+    # response = requests.get(url=url1)
+    r = requests.get(url=url1)
+    if 'json' in r.headers.get('Content-Type'):
+        js = r.json()
+    else:
+        print('Response content is not in JSON format.')
+        js = 'spam'
+    print(js)
+    data = r.json()
+    print(data)
+    # pdb.set_trace()
 
     # c1 = os.system('wget {}'.format(url)) - refused
     # c1 = os.system('curl -I {}'.format(url)) - refused
@@ -138,15 +150,17 @@ def rgwops():
     # filename = wget.download(url) - refused
 
     # trying urllib3 another techq
-    http = urllib3.PoolManager()
-    r = http.request('GET', curl_url)
-    print(r.status)
+    # http = urllib3.PoolManager()
+    # r = http.request('GET', curl_url)
+    # print(r.status)
 
     # regx uid+anonymous part search
     str_check = "uid+anonymous"
     grep_file = f"grep -A 200 {get_time} /var/log/ceph/ceph-rgw-{hostname}.rgw0.log | grep {str_check}"
     # print(grep_file)
     print(cmdline(grep_file))
+
+    # add delete user and remove .s3cfg file after search
 
 def ceph_conf_change(hostname):
     # set the debug rgw = 20 , debug ms = 1,  in the .rgw0 instance
