@@ -5,6 +5,7 @@ from subprocess import PIPE, Popen
 import time
 import os
 import requests
+import subprocess
 from configparser import ConfigParser
 parser = ConfigParser()
 
@@ -119,17 +120,22 @@ def rgwops():
     time.sleep(5)
     get_time = time.strftime("%H:%M:%S")
     print(get_time)
+    d1 = '1 min ago'
+    d2 = '+\'%T\''
+    completed = subprocess.run(['date', d2, '-d', d1], stdout=subprocess.PIPE, )
+    date_1 = completed.stdout.decode('utf-8').strip(' \' , \n')
+    print(date_1)
 
     r = requests.get(url=URL)
     print("The response is ::", r)
 
 
-    # regx uid+anonymous part search
+    # regex uid+anonymous part search where grep for current min and 1 min back for the perfect scenario and match
     str_check = "uid+anonymous"
-    grep_file = f"grep -A 200 {get_time} /var/log/ceph/ceph-rgw-{hostname}.rgw0.log | grep {str_check}"
+    grep_file = f"grep -A 200 -e {date_1} -e {get_time} /var/log/ceph/ceph-rgw-{hostname}.rgw0.log | grep {str_check}"
     print(cmdline(grep_file))
 
-    # add delete user and remove .s3cfg file after search
+    # delete user and remove .s3cfg file after search
     del_user = f"radosgw-admin user rm --uid={user} --purge-data"
     cmdline(del_user)
     remove_s3cfg_file = f"rm -rf .s3cfg_{user}"
