@@ -99,15 +99,8 @@ def rgwops():
     # change the conf file
     ceph_conf_change(hostname)
 
-    # restart the rgw
-    restart_rgw = f"systemctl restart ceph-radosgw@rgw.{hostname}.rgw0.service"
-    cmdline(restart_rgw)
-
-    # status of rgw
-    status_rgw = f"systemctl status ceph-radosgw@rgw.{hostname}.rgw0.service"
-    print(cmdline(status_rgw))
-
-
+    # restart and status
+    restart_and_status(hostname)
 
     # curl url from s3cmd info
     # install package requests - if using requests
@@ -141,6 +134,13 @@ def rgwops():
     remove_s3cfg_file = f"rm -rf .s3cfg_{user}"
     cmdline(remove_s3cfg_file)
 
+    # reset the conf changes
+    reset_conf_change(hostname)
+
+    # restart and status
+    restart_and_status(hostname)
+
+
 def ceph_conf_change(hostname):
     # set the debug rgw = 20 , debug ms = 1,  in the .rgw0 instance
     file_name = '/etc/ceph/ceph.conf'
@@ -154,6 +154,25 @@ def ceph_conf_change(hostname):
     print(parser.get(section_name, 'debug ms'))
     print(parser.get(section_name, 'debug rgw'))
 
+
+def reset_conf_change(hostname):
+    file_name = '/etc/ceph/ceph.conf'
+    section_name = 'client.rgw.{}.rgw0'.format(hostname)
+    parser.read(file_name)
+    parser.remove_option(section_name, 'debug ms')
+    parser.remove_option(section_name, 'debug rgw')
+    with open(file_name, 'w') as f:
+        parser.write(f)
+    f.close()
+
+
+def restart_and_status(hostname):
+    # restart the rgw
+    restart_rgw = f"systemctl restart ceph-radosgw@rgw.{hostname}.rgw0.service"
+    cmdline(restart_rgw)
+    # status of rgw
+    status_rgw = f"systemctl status ceph-radosgw@rgw.{hostname}.rgw0.service"
+    print(cmdline(status_rgw))
 
 
 def acl_info_check(bkt_name, user):
